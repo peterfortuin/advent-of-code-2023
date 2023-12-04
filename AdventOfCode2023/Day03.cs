@@ -72,7 +72,7 @@ class Day03 : PuzzleBase
                 {
                     if (DoesSearchFieldContainSymbol(searchfield))
                     {
-                        sum += numberFound;                        
+                        sum += numberFound;
                     }
                     numberFound = 0;
                     searchfield.Clear();
@@ -93,9 +93,74 @@ class Day03 : PuzzleBase
         return sum.ToString();
     }
 
-    public override string RunPuzzle2(ReadOnlyCollection<string> lines)
+    public override string RunPuzzle2(ReadOnlyCollection<string> l)
     {
-        return "";
+        lines = l;
+
+        var numberFound = 0;
+        var searchfield = new List<Tuple<int, int>>();
+        var gearList = new Dictionary<Tuple<int, int>, List<int>>();
+        var sum = 0;
+
+        for (int y = 0; y < lines.Count; y++)
+        {
+            for (int x = 0; x < lines[y].Length; x++)
+            {
+                var symbol = Get(x, y);
+
+                if (char.IsDigit(symbol))
+                {
+                    int digit = symbol - '0';
+                    numberFound = numberFound * 10 + digit;
+
+                    searchfield.Add(Tuple.Create(x + 1, y));
+                    searchfield.Add(Tuple.Create(x + 1, y + 1));
+                    searchfield.Add(Tuple.Create(x, y + 1));
+                    searchfield.Add(Tuple.Create(x - 1, y + 1));
+                    searchfield.Add(Tuple.Create(x - 1, y));
+                    searchfield.Add(Tuple.Create(x - 1, y - 1));
+                    searchfield.Add(Tuple.Create(x, y - 1));
+                    searchfield.Add(Tuple.Create(x + 1, y - 1));
+                }
+                else if (!char.IsDigit(symbol) && numberFound > 0)
+                {
+                    var possibleFind = FindGearInSearchField(searchfield);
+                    if (possibleFind != null)
+                    {
+                        if (!gearList.ContainsKey(possibleFind))
+                        {
+                            gearList.Add(possibleFind, []);
+                        }
+                        gearList[possibleFind].Add(numberFound);
+                    }
+                    numberFound = 0;
+                    searchfield.Clear();
+                }
+            }
+
+            if (numberFound > 0)
+            {
+                var possibleFind = FindGearInSearchField(searchfield);
+                if (possibleFind != null)
+                {
+                    if (!gearList.ContainsKey(possibleFind))
+                    {
+                        gearList.Add(possibleFind, []);
+                    }
+                    gearList[possibleFind].Add(numberFound);
+                }
+                numberFound = 0;
+                searchfield.Clear();
+            }
+        }
+
+        foreach (var gear in gearList)
+        {
+            if (gear.Value.Count == 2)
+                sum += gear.Value[0] * gear.Value[1];
+        }
+
+        return sum.ToString();
     }
 
     private char Get(int x, int y)
@@ -109,8 +174,7 @@ class Day03 : PuzzleBase
         foreach (var field in searchfield)
         {
             var symbol = Get(field.Item1, field.Item2);
-            
-            
+
             if (!char.IsDigit(symbol) && symbol != '.' && symbol != ' ')
             {
                 return true;
@@ -118,5 +182,20 @@ class Day03 : PuzzleBase
         };
 
         return false;
+    }
+
+    private Tuple<int, int>? FindGearInSearchField(List<Tuple<int, int>> searchfield)
+    {
+        foreach (var field in searchfield)
+        {
+            var symbol = Get(field.Item1, field.Item2);
+
+            if (symbol == '*')
+            {
+                return Tuple.Create(field.Item1, field.Item2);
+            }
+        };
+
+        return null;
     }
 }
